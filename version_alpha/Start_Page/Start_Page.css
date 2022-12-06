@@ -1,0 +1,59 @@
+body {
+    margin:0;
+    height: 200%;
+}
+
+section {
+    width: 100%;
+    height: 90%;
+    background: green fixed;
+    
+}
+
+#title {
+    font-size: 6em;
+    width: 20%;
+    margin-top: 70%;
+    margin-left: 40%;
+    position: absolute;
+    animation: appear 1.5s ease-out;
+}
+
+@keyframes appear {
+    from {
+        left: -20%;
+        opacity: 0;
+    }
+    to {
+        left: 0%;
+        opacity: 1;
+    }
+}
+
+@keyframes disappear {
+    from {
+        left: 0%;
+        opacity: 1;
+    }
+
+    to {
+        left: -20%;
+        opacity: 0;
+    }
+}
+
+nav {
+    background-color: rgba(13, 34, 13, 0.349);
+}
+
+nav a {
+    text-decoration: none;
+    color: black;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    font-size: 50px;
+    font-family: sans-serif;
+}
+
+

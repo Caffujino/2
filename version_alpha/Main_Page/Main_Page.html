@@ -1,0 +1,86 @@
+<html lang="en"><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>UI</title>
+    <script type="text/javascript" src="../d3/d3.js"></script>
+    <link rel="stylesheet" href="./Main_Page.css">
+    <style type="text/css"></style>
+</head>
+<body>
+    <h1>Selecting from Categories</h1>
+    <section class="axis-changeable_graph">
+    <nav>
+        <div>
+            <span>
+                <button type="button" id="category_btn1" class="category_btn" style="display:inline;" onclick="change_to_Category1()">category1</button>
+                <button type="button" id="category_btn2" class="category_btn" onclick="change_to_Category2()">category2</button>
+            </span>
+                <div id="axis_inputs" class="option_area place_side">
+                    <button type="button" class = "axis_btn" id="review_cnt">レビュー数</button><br>
+                    <button type="button" class = "axis_btn" id="follower">フォロワー数</button><br>
+                    <button type="button" class = "axis_btn" id="favorite">お気に入り数</button><br>
+                    <button type="button" class = "axis_btn" id="photo">投稿写真数</button><br>
+                </div>
+
+            <span id="rank_inputs" style="display: none"><br>
+                <select id="region_sel" class="rank_btn">
+                    <option>---地域から選択---</option>
+                    <option>北海道</option>
+                    <option>新潟</option>
+                    <option>静岡</option>
+                    <option>神奈川</option>
+                    <option>愛知</option>
+                    <option>福岡</option>
+                    <option>広島</option>
+                    <option>兵庫</option>
+                    <option>宮城</option>
+                    <option>岐阜</option>
+                    <option>岡山</option>
+                    <option>岡山</option>
+                    <option>群馬</option>
+                    <option>三重</option>
+                    <optgroup label="関東">
+                        <option value="東京" >東京</option>
+                        <option value="千葉">千葉</option>
+                    </optgroup>
+                    <optgroup label="関西">
+                        <option>大阪</option>
+                        <option>京都</option>
+                    </optgroup>
+                </select><br>
+                <select id="food_sel" class="rank_btn">
+                    <option>---飲食カテゴリーから選択---</option>
+                    <option>ラーメン</option>
+                    <option>カフェ</option>
+                    <option>居酒屋</option>
+                    <option>洋菓子</option>
+                    <option>和菓子</option>
+                    <option>そば</option>
+                    <option>パン</option>
+                    <option>その他</option>
+                    <option>喫茶店</option>
+                    <option>日本料理</option>
+                    <option>フレンチ</option>
+                    <option>南アジア料理</option>
+                </select><br>
+                <input value="0" type="number" id="Rank_Num" class="rank_btn">
+            </span>
+        </div>
+    </nav>
+    <div class="explanation">
+        <text id="explanation_text">Drag<br>Axis<br>to<br>Plot<br><span>⇨</span></text>
+    </div>
+    <main id="main">
+        <div id="Y_axisLabel"><div><rect id="Y_axisLabel_rect"><text></text></rect></div></div>
+        <div id="my_dataviz" class="graph_area place_side">
+            <div id="zoomOverlay"></div>
+            <div id="Xaxis_area" class="drop_area drop_areaX hidden"><p class="drop_areaX">ここにドロップ</p></div>
+            <div id="Yaxis_area" class="drop_area drop_areaY hidden"><p class="drop_areaY">ここにドロップ</p></div>    
+        </div>
+        <div id="zoom_out"><button type="button" id="zoom_out_btn">Zoom<br>Out</button></div>
+        <div id="X_axisLabel"><rect id="X_axisLabel_rect"><text></text></rect></div>
+    </main>
+    </section>
+
+    <script src="./Main_Page.js"></script>
+</body>
+</html>

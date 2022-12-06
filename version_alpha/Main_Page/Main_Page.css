@@ -1,0 +1,265 @@
+body {
+    background-color: gray;
+    font-family:  "ヒラギノ角ゴ ProN W3", HiraKakuProN-W3, 游ゴシック, "Yu Gothic", メイリオ, Meiryo, Verdana, Helvetica, Arial, sans-serif;
+}
+
+h1 {
+    height: 8vh;
+    text-align: center;
+    margin: 1vh 1vw 3vh 1vw;
+    padding-bottom: 1vh;
+    border-bottom: 1px black solid;
+    font-size: 6vh;
+    font-family: none;
+}
+
+nav {
+    position: relative;
+    left: 2vw;
+    width: 25vw;
+    height: 80vh;
+    top: 0px;
+    text-align: center;
+    background-color: lightgray;
+    border: gray;
+    border-radius: 8px;
+    color: white;
+    padding: 2vh 1vw;
+    font-size: 1.1rem;
+    display: inline-block;
+    vertical-align: top;
+}
+
+main {
+    position: relative;
+    left: 4vw;
+    width: 50vw;
+    height: 80vh;
+    margin: 0;
+    padding: 2vh 1vw;
+    background-color: darkgray;
+    border-radius: 10px;
+    color: white;
+    font-size: 1.1rem;
+    display: inline-block;
+    vertical-align: top;
+}
+
+.category_btn {
+    background: #333;
+    border: gray;
+    border-radius: 7px;
+    color: white;
+    padding: .8rem;
+    font-size: 1.1rem;
+}
+
+.category_btn:hover {
+    background-color: #555;
+    cursor: pointer;
+}
+
+.axis_btn {
+    width: 60%;
+    height: 8%;
+    margin: 30px 0;
+    background: gray;
+    border: gray;
+    border-radius: 8px;
+    color: white;
+    font-size: 1.35rem;
+}
+
+.axis_btn:hover {
+    background: dimgray;
+    border: dimgray;
+    cursor:-moz-grab;
+    cursor:-webkit-grab;
+    cursor: grab;
+}
+
+.axis_btn:active {
+    cursor:-moz-grabbing;
+    cursor:-webkit-grabbing;
+    cursor: grabbing;
+}
+
+.rank_btn {
+    width: 60%;
+    height: 8%;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    background: gray;
+    border: gray;
+    border-radius: 8px;
+    color: white;
+    padding: .2rem;
+    font-size: 1vw;
+    text-align: center;
+}
+
+.rank_btn:hover {
+    cursor: pointer;
+}
+
+#rank_num {
+    font-size: 2vh;
+}
+
+#rank_num:hover {
+    cursor: default;
+}
+
+#ranking {
+    visibility: hidden;
+}
+
+#svg_area {
+    pointer-events: none;
+    position: relative;
+    z-index: 100;
+}
+
+svg circle {
+    pointer-events: all;
+}
+
+svg circle:hover {
+    cursor: pointer;
+}
+
+.graph_area {
+    width: 80%;
+    height: 84%;
+    margin: 2%;
+    display: inline-block;
+    vertical-align: top;
+}
+
+#clip {
+    top: 0;
+    left: 0;
+}
+
+#Xaxis_area {
+    position: absolute;
+    background-color: blue;
+    z-index: 100;
+}
+
+#Yaxis_area {
+    position: absolute;
+    background-color: blue;
+    z-index: 100;
+}
+
+#Xaxis_area p, #Yaxis_area p{
+    font-size:20px;
+    color: yellow;
+    text-align: center;
+    pointer-events: none;
+    position: absolute;
+}
+
+#Xaxis_area p {
+    width: 100%;
+    bottom: 0;
+}
+
+#Yaxis_area p{
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+    top: 43%;
+    left: -30%;
+    white-space: nowrap;
+}
+
+.visible {
+    opacity: 0.5;
+}
+
+.hidden {
+    opacity: 0;
+}
+
+#zoomOverlay {
+    position: absolute;
+    pointer-events: all;
+    fill: none;
+}
+
+#zoomOverlay:hover {
+    cursor: url(../image/cursor_move_trans.png), default;
+}
+
+#zoomOverlay rect {
+    pointer-events: all;
+}
+
+#X_axisLabel {
+    position: absolute;
+    height: 10%;
+    width: 50%;
+    bottom: 2vh;
+}
+
+#Y_axisLabel {
+    position: relative;
+    width: 12%;
+    height: 50%;
+    display: inline-block;
+}
+
+#X_axisLabel_rect, #Y_axisLabel_rect {
+    position: absolute;
+    background: gray;
+    border: gray;
+    border-radius: 8px;
+    color: white;
+    font-size: 1.35rem;
+}
+
+#X_axisLabel_rect {
+    top: 0;
+    right: 0;
+    display: table;
+}
+
+#Y_axisLabel_rect {
+    right: 0;
+    bottom: 100%;
+    display: table;
+    transform: rotate(-90deg);
+    -webkit-transform: rotate(-90deg);
+    transform-origin: right bottom;
+}
+
+#X_axisLabel_rect text, #Y_axisLabel_rect text {
+    display: table-cell;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.explanation {
+    position: relative;
+    display: inline-block;
+    left: 3vw;
+    width: 14vw;
+    height: 80vh;
+    padding: 2vh 0;
+    font-size: 3vw;
+    font-family: none;
+    text-align: center;
+}
+
+#explanation_text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translateY(-50%) translateX(-50%);
+    -webkit-transform: translateY(-50%) translateX(-50%);
+}
+
+#explanation_text span {
+    font-size: 10vw;
+}

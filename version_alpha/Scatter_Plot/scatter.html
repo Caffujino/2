@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <title>D3 Test</title>
+    <script type="text/javascript" src="../d3/d3.js"></script>
+    <style type="text/css">
+        svg {
+            pointer-events: none;
+        }
+
+        /* #my_dataviz {
+            pointer-events: none;
+        } */
+
+        .option_area {
+            width: 30%;
+            max-width: 300px;
+        }
+
+        button {
+            width: 100%;
+            height: 60px;
+            font-size: 40px;
+            margin:10px 8px;
+            padding: auto;
+        }
+
+        .place_side {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .graph_area {
+            width: 60%;
+            margin: 20px;
+            padding: 20px;
+            border-left: 1px black solid;
+            position: relative;
+        }
+
+        #Xaxis_area {
+            top: 370px;
+            left: 80px;
+            width: 450px;
+            height: 80px;
+            position: absolute;
+            background-color: blue;
+            z-index: 100;
+        }
+
+        #Yaxis_area {
+            top: 0px;
+            left: 0px;
+            width: 80px; /* jsで定義されている変数"width"によって調整 */
+            height: 370px; /* jsで定義されている変数"height"によって調整 */
+            position: absolute;
+            background-color: blue;
+            z-index: 100;
+        }
+
+        #Xaxis_area p, #Yaxis_area p{
+            width: 90%;
+            height: 90%;
+            font-size:20px;
+            color: yellow;
+            text-align: center;
+            pointer-events: none;
+            position: absolute;
+        }
+
+        .visible {
+            opacity: 0.5;
+        }
+
+        .hidden {
+            opacity: 0;
+        }
+
+        #zoomOverlay {
+            top: 30px;
+            left: 80px;
+            width: 410px;
+            height: 340px;
+            position: absolute;
+            pointer-events: all;
+            fill: none;
+        }
+
+        /* #component {
+            pointer-events: none;
+        } */
+    </style>
+    </head>
+    <body>
+    <section class="axis-changeable_graph">
+        <div class="option_area place_side">
+            <button id="male">男性</button>
+            <button id="female">女性</button>
+            <button id="total">合計</button>
+        </div> 
+        <!-- Create a div where the graph will take place -->
+        <div id="my_dataviz" class="graph_area place_side">
+            <!-- <div id="Xaxis_area" class="drop_area drop_areaX hidden"></div>
+            <div id="Yaxis_area" class="drop_area drop_areaY hidden"></div> -->
+            <div id="zoomOverlay"></div>
+            <div id="Xaxis_area" class="drop_area drop_areaX hidden"><p class="drop_areaX">ここにドロップ</p></div>
+            <div id="Yaxis_area" class="drop_area drop_areaY hidden"><p class="drop_areaY">ここにドロップ</p></div>    
+        </div>
+    </section>
+    <script>
+        var features = ["male", "female", "total"];
+        var features_range = {};
+        var dataSet = {};
+        var dragging_element = null;
+        var current_X;
+        var current_Y;
+        var X_axis;
+        var Y_axis;
+        
+        var bandPos = [-1, -1];
+        var pos;
+        var colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+        var zoomArea, line;
+        var delta_x=0;
+        var delta_y=0;
+        var flag = -1;
+        var zoom_count = 1;// zoom 回数の記憶
+        var scale = 0.5;
+
+        var drag = d3.drag();
+
+        // set the dimensions and margins of the graph
+        const margin = {top: 10, right: 30, bottom: 50, left: 60};
+        const width = 500 - margin.left - margin.right;
+        const height = 400 - margin.top - margin.bottom;
+        
+        const animation_time = 1000;
+
+        for (const feature of features) {
+            dataSet[feature] = new Array();
+            features_range[feature] = new Array();
+        }
+
+        d3.csv("csv/prefecture.csv").then(function(data) {
+            for (const d of data) {
+                dataSet["male"].push(parseFloat(d.male));
+                dataSet["female"].push(parseFloat(d.female));
+                dataSet["total"].push(parseFloat(d.total));
+            }
+            for (const feature of features) {
+                var diff = (Math.max(...dataSet[feature]) - Math.min(...dataSet[feature])) * 0.1;
+                features_range[feature].push(Math.min(...dataSet[feature])-diff);
+                features_range[feature].push(Math.max(...dataSet[feature])+diff);
+            }
+
+            // append the svg object to the body of the page
+            var svg = d3.select("#my_dataviz").append("svg")
+                .attr("id", "svg_area")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+                .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+        
+            // Add X axis
+            X_axis = d3.scaleLinear()
+                .domain([0, 0])
+                .range([ 0, 0 ]);
+            svg.append("g")
+                .attr("class", "myXaxis")   // Note that here we give a class to the X axis, to be able to call it later and modify it
+                .attr("transform", "translate(0," + height + ")")
+                .call(d3.axisBottom(X_axis))
+                .attr("opacity", "0")
+                .selectAll("text")
+                    .attr("transform", "rotate(45)")    // 文字を時計回りに45度回転させる
+                    .style("text-anchor", "start");
+        
+            // Add Y axis
+            Y_axis = d3.scaleLinear()
+                .domain([0, 0])
+                .range([ height, height]);
+            svg.append("g")
+                .attr("class", "myYaxis") // Note that here we give a class to the Y axis, to be able to call it later and modify it
+                .call(d3.axisLeft(Y_axis))
+                .attr("opacity", "0");
+
+            // 要素の位置座標を取得
+            var clientRect = document.getElementById("svg_area").getBoundingClientRect() ;
+
+            // 画面の左端から、要素の左端までの距離
+            var svg_left = clientRect.left ;
+
+            // 画面の上端から、要素の上端までの距離
+            var svg_top = clientRect.top ;
+        
+            d3.select("#zoomOverlay")
+                .on("dblclick", function(e){// zoom処理
+                    console.log("doubleclick");
+                    zoom_count += 1;
+
+                    var pos = [e.x - svg_left, e.y - svg_top];
+                    var x_pos = X_axis.invert(pos[0]);
+                    var y_pos = Y_axis.invert(pos[1]);
+
+                    // console.log(x_pos, y_pos);
+                    // console.log(pos);
+
+                    var zoom_scope_x = (features_range[current_X][1]-features_range[current_X][0])*0.5**zoom_count;
+                    var zoom_scope_y = (features_range[current_Y][1]-features_range[current_Y][0])*0.5**zoom_count;
+
+                    // console.log(zoom_scope_x, zoom_scope_y);
+                    // console.log(zoomArea);
+
+                    zoomArea.x1 = x_pos-zoom_scope_x;
+                    zoomArea.x2 = x_pos+zoom_scope_x;
+                    zoomArea.y1 = y_pos+zoom_scope_y;
+                    zoomArea.y2 = y_pos-zoom_scope_y;
+
+                    // console.log(zoomArea);
+
+                    bandPos = [-1, -1];
+
+                    zoom();
+                })
+                .call(drag)
+
+            // Add dots
+            svg.append('g')
+                .attr("id", "component")
+                .selectAll("dot")
+                .data(data)
+                .enter()
+                .append("circle")
+                    .attr("cx", function (d) { return X_axis(d.male); } )
+                    .attr("cy", function (d) { return Y_axis(d.female); } )
+                    .attr("r", 5)
+                    .style("fill", "#69b3a2")
+                    .style("stroke", "black");
+            
+            current_X = "male";
+            current_Y = "female";
+        
+            // new X axis
+            X_axis.domain(features_range["male"]).range([0, width]);
+            Y_axis.domain(features_range["female"]).range([height, 0]);
+            svg.select(".myXaxis")
+                .transition()
+                .duration(animation_time)
+                .attr("opacity", "1")
+                .call(d3.axisBottom(X_axis))
+                .selectAll("text")
+                    .attr("transform", "rotate(45)")    // 文字を時計回りに45度回転させる
+                    .style("text-anchor", "start"); //　文字の表示開始位置を指定にする;
+            svg.select(".myYaxis")
+                .transition()
+                .duration(animation_time)
+                .attr("opacity", "1")
+                .call(d3.axisLeft(Y_axis));
+        
+            svg.selectAll("circle")
+                .transition()
+                .delay(function(d,i){return(i*3)})
+                .duration(animation_time)
+                .attr("cx", function (d) { return X_axis(d.male); } )
+                .attr("cy", function (d) { return Y_axis(d.female); } );
+                
+            
+            zoomArea = {
+                x1: features_range[current_X][0],
+                y1: features_range[current_Y][0],
+                x2: features_range[current_X][1],
+                y2: features_range[current_Y][1]
+            };
+
+            const options = document.querySelectorAll(".option_area *");
+            const Xaxis_area = document.getElementById("Xaxis_area");
+            const Yaxis_area = document.getElementById("Yaxis_area");
+
+            const drop_areas = document.querySelectorAll(".drop_area");
+
+            for (const option of options) {
+                option.draggable = true;
+                option.addEventListener("drag", undefined);
+                option.addEventListener("dragstart", (e) => {
+                    dragging_element = e.target;
+                });
+                option.addEventListener("dragend", (e) => {
+                    var x = event.clientX;
+                    var y = event.clientY;
+                    var element = document.elementFromPoint(x, y);
+                    if (element.classList.contains("drop_areaX")) {
+                        const prev_X = current_X;
+                        current_X = dragging_element.id;
+                        new_axis(prev_X, current_Y, current_X, current_Y, "0", "1");
+                    } else if (element.classList.contains("drop_areaY")) {
+                        const prev_Y = current_Y;
+                        current_Y = dragging_element.id;
+                        new_axis(current_X, prev_Y, current_X, current_Y, "1", "0");
+                    }
+                    dragging_element = null;
+                });
+            }
+
+            for (const area of drop_areas) {
+                area.addEventListener("dragover", (e) => {
+                    e.preventDefault();
+                });
+                area.addEventListener("dragenter", (e) => {
+                    if (area.classList.contains("drop_areaX")) {
+                        document.getElementById("Xaxis_area").classList.remove("hidden");
+                        document.getElementById("Xaxis_area").classList.add("visible");
+                    } else if (area.classList.contains("drop_areaY")) {
+                        document.getElementById("Yaxis_area").classList.remove("hidden");
+                        document.getElementById("Yaxis_area").classList.add("visible");
+                    }
+                });
+                area.addEventListener("dragleave", (e) => {
+                    if (area.classList.contains("drop_areaX")) {
+                        document.getElementById("Xaxis_area").classList.remove("visible");
+                        document.getElementById("Xaxis_area").classList.add("hidden");
+                    } else if (area.classList.contains("drop_areaY")) {
+                        document.getElementById("Yaxis_area").classList.remove("visible");
+                        document.getElementById("Yaxis_area").classList.add("hidden");
+                    }
+                });
+                area.addEventListener("drop", (e) => {
+                    e.preventDefault();
+                    if (area.classList.contains("drop_areaX")) {
+                        const prev_X = current_X;
+                        current_X = dragging_element.id;
+                        new_axis(prev_X, current_Y, current_X, current_Y, "0", "1");
+                    } else if (area.classList.contains("drop_areaY")) {
+                        const prev_Y = current_Y;
+                        current_Y = dragging_element.id;
+                        new_axis(current_X, prev_Y, current_X, current_Y, "1", "0");
+                    }
+                    area.classList.remove("visible");
+                    area.classList.add("hidden");
+                    dragging_element = null;
+                });
+            }
+
+            // 変更があった方のopacity引数を"0", もう片方を"1"とすることで、変更があった方は
+            // 透明から徐々に色を帯びるアニメーションになる
+            function new_axis(prev_X, prev_Y, curr_X, curr_Y, X_opacity, Y_opacity) {
+                // X axis
+                X_axis = d3.scaleLinear()
+                    .domain(features_range[prev_X])
+                    .range([ 0, width ]);
+                svg.select(".myXaxis")
+                    .call(d3.axisBottom(X_axis))
+                    .attr("opacity", X_opacity)
+                    .selectAll("text")
+                        .attr("transform", "rotate(45)")    // 文字を時計回りに45度回転させる
+                        .style("text-anchor", "start");
+
+                // Y axis 
+                Y_axis = d3.scaleLinear()
+                    .domain(features_range[prev_Y])
+                    .range([ height, 0]);
+                svg.select(".myYaxis")
+                    .call(d3.axisLeft(Y_axis))
+                    .attr("opacity", Y_opacity);
+                
+                // new X axis
+                X_axis.domain(features_range[curr_X]);
+                svg.select(".myXaxis")
+                    .transition()
+                    .duration(animation_time)
+                    .attr("opacity", "1")
+                    .call(d3.axisBottom(X_axis))
+                    .selectAll("text")    
+                        .attr("transform", "rotate(45)")    // 文字を時計回りに45度回転させる
+                        .style("text-anchor", "start");
+                
+                // new Y axis
+                Y_axis.domain(features_range[curr_Y])
+                    .range([height, 0]);
+                svg.select(".myYaxis")
+                    .transition()
+                    .duration(animation_time)
+                    .attr("opacity", "1")
+                    .call(d3.axisLeft(Y_axis));
+                
+                // plot dots
+                svg.selectAll("circle")
+                    .transition()
+                    .delay(function(d,i){return(i*3)})
+                    .duration(animation_time)
+                    .attr("cx", function (d) { return X_axis(d[current_X]); } )
+                    .attr("cy", function (d) { return Y_axis(d[current_Y]); } )
+                    .attr("r", 5*(1+zoom_count))
+                    // .attr("visibility", function(d) {
+                    //     var elements = document.elementsFromPoint(this.cx, this.cy);
+                    //     if (elements.contains(document.getElementById("zoomOverlay"))) {
+                    //         return "visible";
+                    //     } else {
+                    //         return "hidden";
+                    //     }
+                    // });
+            }
+
+            drag.on("drag", function(e) {// drag中
+                if (flag == -1) {
+                    flag = 1;
+                    bandPos = [e.x, e.y]
+                }
+                // var pos = d3.mouse(this); 使用不可!!!!!!!!
+
+                console.log("dragging");
+                
+            });
+            
+            drag.on("end", function(e) {// dragが終了した時の処理
+                if(flag > 0){// dragが発生した後のみ以下の処理を行う。
+                    var pos = [e.x, e.y];
+
+                    // console.log(pos);
+
+                    var x1 = X_axis.invert(bandPos[0]);
+                    var x2 = X_axis.invert(pos[0]);// 今のマウスの位置
+
+                    // console.log(x1);
+                    // console.log(x2);
+
+                    delta_x = (x2-x1)*scale;// 追加
+                    
+                    var y1 = Y_axis.invert(pos[1]);
+                    var y2 = Y_axis.invert(bandPos[1]);
+
+                    delta_y = (y1-y2)*scale;// 追加
+                    
+                    bandPos = [-1, -1];
+
+                    // console.log(zoomArea);
+                    // console.log(delta_x);
+                    
+                    zoomArea.x2 -= delta_x;
+                    zoomArea.x1 -= delta_x;
+                    zoomArea.y2 -= delta_y;
+                    zoomArea.y1 -= delta_y;
+
+                    // console.log(zoomArea);
+                    
+                    zoom();
+                    
+                    delta_x = 0;
+                    delta_y = 0;
+                    
+                    console.log("transition");
+                }
+                flag = -1;
+            });
+            
+            function zoom() {
+                //recalculate domains
+                if (zoomArea.x1 > zoomArea.x2) {
+                    X_axis.domain([zoomArea.x2, zoomArea.x1]);
+                } else {
+                    X_axis.domain([zoomArea.x1, zoomArea.x2]);
+                }
+                
+                if (zoomArea.y1 > zoomArea.y2) {
+                    Y_axis.domain([zoomArea.y2, zoomArea.y1]);
+                } else {
+                    Y_axis.domain([zoomArea.y1, zoomArea.y2]);
+                }
+
+                // if (zoomArea.x1 > zoomArea.x2) {
+                //     X_axis = d3.scaleLinear().domain([zoomArea.x2, zoomArea.x1]).range([0, width]);
+                // } else {
+                //     X_axis = d3.scaleLinear().domain([zoomArea.x1, zoomArea.x2]).range([0, width]);
+                // }
+                
+                // if (zoomArea.y1 > zoomArea.y2) {
+                //     Y_axis = d3.scaleLinear().domain([zoomArea.y2, zoomArea.y1]).range([height, 0]);
+                // } else {
+                //     Y_axis = d3.scaleLinear().domain([zoomArea.y1, zoomArea.y2]).range([height, 0]);
+                // }
+                
+                //update axis and redraw lines
+                var t = svg.transition().duration(animation_time);
+                t.select(".myXaxis")
+                    .call(d3.axisBottom(X_axis))
+                    .selectAll("text")
+                        .attr("transform", "rotate(45)")    // 文字を時計回りに45度回転させる
+                        .style("text-anchor", "start");
+                t.select(".myYaxis")
+                    .call(d3.axisLeft(Y_axis));
+
+                svg.selectAll("circle")
+                    .transition()
+                    .delay(function(d,i){return(i*3)})
+                    .duration(animation_time)
+                    .attr("cx", function (d) { return X_axis(d[current_X]); } )
+                    .attr("cy", function (d) { return Y_axis(d[current_Y]); } )
+                    .attr("r", 5*(1+zoom_count))
+                    // .attr("visibility", function() {
+                    //     var x = this.cx.baseVal.value;
+                    //     var y = this.cy.baseVal.value;
+                    //     var elements = document.elementsFromPoint(x-svg_left, y-svg_top);
+                    //     console.log(elements);
+                    //     if (elements.contains(document.getElementById("zoomOverlay"))) {
+                    //         return "visible";
+                    //     } else {
+                    //         return "hidden";
+                    //     }
+                    // });
+            }
+
+            var zoomOut = function() {// zoomOutボタンが押されたときの処理
+                x.domain([features_range[current_X][0], features_range[current_X][1]]);
+                y.domain([features_range[current_Y][0], features_range[current_Y][1]]);
+                zoomArea.x1 = features_range[current_X][0];// ズームエリアのリセット。そうしないと、前の設定が残って、スクロール時に変なところがズームされる。
+                zoomArea.x2 = features_range[current_X][1];
+                zoomArea.y1 = features_range[current_Y][0];
+                zoomArea.y2 = features_range[current_Y][1];
+                
+                zoom_count = 1;// zoom回数のリセット. 1にリセットすることに注意。範囲の問題。
+                
+                var t = svg.transition().duration(animation_time);
+                t.select(".myXaxis")
+                    .call(d3.axisBottom(X_axis))
+                    .selectAll("text")
+                        .attr("transform", "rotate(45)")    // 文字を時計回りに45度回転させる
+                        .style("text-anchor", "start");
+                t.select(".myYaxis")
+                    .call(d3.axisLeft(Y_axis)); 
+            }  
+
+            // var aa = document.getElementById("my_dataviz");
+            // aa.addEventListener("click", (e) => {
+            //     console.log(document.elementsFromPoint(e.clientX, e.clientY));
+            //     console.log(e.target);
+            // });
+        })
+    </script>
+    </body>
+</html>

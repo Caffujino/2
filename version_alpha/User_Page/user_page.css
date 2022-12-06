@@ -1,0 +1,22 @@
+text{
+    font-family: "YU Gothic UI";
+    font-size: 20px;
+    fill: red;
+    stroke: black;
+}
+h1{
+    font-size: 36px;
+    font-family: "YU Gothic UI";
+    fill: red;
+    stroke: antiquewhite;
+}
+li{
+    font-size: 20px;
+    fill: black;
+}
+p{
+    font-size: 28px;
+}
+body{
+    background-color: antiquewhite;
+}
